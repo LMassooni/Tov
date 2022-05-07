@@ -66,15 +66,16 @@ dr = 0.01
 dp = 0.01*CONV
 
 ### função com as equações de tov
-def Tov(raio, y):
-    dydr = [0, 0, 0, 0]
-    dydr[0] = 4.0*pi*raio**2*Spline_energia(ci[0])  # dm/dr
-    dydr[1] = -(Spline_energia(ci[1]) + ci[1]) * (ci[0] + 4*pi*raio*raio*raio*ci[1])/(raio*raio - 2*raio*ci[0])  # dpr/dr
-    dydr[2] = Spline_barionica(ci[1])*4.0*pi*raio*raio/(np.sqrt(1-2*ci[0]/raio))  # d(baryonic density)/dr
-    dydr[3] = raio
+def Tov(raio, tvr):
+    massa = tvr[0]
+    pressao_t = tvr[1]
+    d_barionica = tvr[2]
 
-    return dydr
-i = 0
+    dmdr = 4*pi*Spline_energia(pressao_t)*raio**2
+    dprdr = -(Spline_energia(pressao_t)+ pressao_t)*(massa+4*pi*raio**3*pressao_t)/(raio**2 - 2*raio*massa)
+    dbdr =  Spline_barionica(d_barionica)*4*pi*raio**2/(np.sqrt(1-2*massa/raio)) 
+    return np.array([dmdr, dprdr, dbdr])
+
 
 ### O while vai integrar a tov das menores pressões até as maiores da equação de estado
 ### ci são as condições iniciais, onde a variavel pressao_min ira aumentar de dp a cada estrela
@@ -84,13 +85,19 @@ i = 0
 ### as condições iniciais, o método, e raio_eval = tamanho do passo (dr)
 ### Tov_resolved.y recebe os resultados da integração e salva em 4 variaveis
 ### a cada integral resolvida, redefine as condições iniciais (pressao_min, bc e ec)
+i = 0
+print(pressao_max)
+print(pressao_min)
+
+limites = np.array([pressao_max, pressao_min])
+
 while pressao_min < pressao_max:
-    ci = [4.0/3.0*pi*dr*dr*dr*ec, pressao_min, 4.0/3.0*pi*dr*dr*dr*bc, 0]
-    Tov_resolved = integrate.solve_ivp(Tov,(raio, pressao_min>=pressao_max),ci, method='RK45', raio_eval=dr)
-    dmdr, dprdr, dbdr, r = Tov_resolved.y
-    pressao_min = pressao_min + dp
-    ec = Spline_energia(pressao_min)
-    bc = Spline_barionica(pressao_min)
+    ci = [4.0/3.0*pi*dr*dr*dr*ec, pressao_max, 4.0/3.0*pi*dr*dr*dr*bc]
+    Tov_resolved = integrate.solve_ivp(Tov, limites , ci, method='RK45')
+    dmdr, dprdr, dbdr = Tov_resolved.y
+    pressao_max = pressao_max - dp
+    ec = Spline_energia(pressao_max)
+    bc = Spline_barionica(pressao_max)
     print("Estrela:", i)
     i+=1
 
@@ -102,8 +109,7 @@ m = massa_max/Massa_sol     ### Retornando as unidades para massa solares
 pos = np.where(massa_max)
 dprdr_max = dprdr[pos]
 dbdr_max = dbdr[pos]
-raio_max = r[pos]
 db = dbdr_max/CONVBARYON    ### Retornando para fm^-4
 d = dprdr_max/CONV 
 
-print(m, d, db, raio_max)
+print(dmdr)
