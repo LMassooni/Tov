@@ -77,24 +77,25 @@ dr = 0.01
 dp = 0.01*CONV
 
 
-def dmdr(d_en, raio):
+def dmdr(pressao, raio):
 
-    massa = 4*pi*Spline_energia(d_en)*raio**2
+    massa = 4*pi*Spline_energia(pressao)*raio**2
 
     return massa
 
 
-def dprdr(d_en, pressao, raio):
+def dprdr(massa, pressao, raio):
 
     pressao = - (Spline_energia(pressao) + pressao) * \
-        (d_en+4*pi*raio**3*pressao)/(raio**2 - 2*raio*d_en)
+        (massa+4*pi*raio**3*pressao)/(raio**2 - 2*raio*massa)
 
     return pressao
 
 
-def dbdr(d_en, pressao, raio):
+def dbdr(massa, pressao, raio):
 
-    densidade = Spline_barionica(pressao)*4*pi*raio**2/(np.sqrt(1-2*d_en/raio))
+    densidade = Spline_barionica(pressao)*4*pi * \
+        raio**2/(np.sqrt(1-2*massa/raio))
 
     return densidade
 
