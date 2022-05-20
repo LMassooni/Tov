@@ -1,8 +1,15 @@
-import matplotlib.pyplot as plt
-import numpy as np
-from rungekutta4 import rk4
 from scipy import interpolate
+from rungekutta4 import rk4
+import numpy as np
+import matplotlib.pyplot as plt
 
+###################### COMO USAR ##########################
+# A única exigência para o código é instalar as bibliotecas numpy e scipy
+# com o comando pip install numpy, scipy, ou python3 pip install numpy, scipy
+# e ter o arquivo da equação de estado (.dat) na mesma pasta do código.
+
+
+# Constantes e Conversões
 pi = round(np.pi, 10)
 CONV = 0.00026115  # 1 fm-4 = 2.6115e-4 km-2
 # 939.0 * (1 MeV/fm3) = 939.0*1.3234e-6 km-2 = 1.2426726e-3 km-2
@@ -13,7 +20,13 @@ aux = []
 aux2 = []
 
 
+# Vai receber a lista de números da equação de estado e vai tratar os dados, jogando pra uma array com
+# componente 0 = densidade barionica, componente 1 = densidade de energia e componente 2 = pressão
+
+
 def Eos(eos):
+    aux = []
+    aux2 = []
     with open(eos) as f:
         for line in f:
             x = line.strip()
@@ -38,6 +51,8 @@ eos = np.array(Eos(x))
 
 # Atribuindo as colunas da equação de estado e
 # Passando de fm^-4 pra km^-2
+
+
 densidade_barionica = eos[0]
 densidade_barionica = np.multiply(densidade_barionica, CONVBARYON)
 densidade_energia = eos[1]
@@ -45,6 +60,7 @@ densidade_energia = np.multiply(densidade_energia, CONV)
 pressao = eos[2]
 pressao = np.multiply(pressao, CONV)
 
+# Montando as splines
 
 Spline_barionica = interpolate.interp1d(
     pressao, densidade_barionica, kind='cubic', fill_value="extrapolate")
